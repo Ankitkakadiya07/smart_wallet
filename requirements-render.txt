@@ -1,0 +1,9 @@
+# Render.com optimized requirements
+Django==4.2.16
+python-decouple==3.8
+whitenoise==6.6.0
+gunicorn==21.2.0
+dj-database-url==2.1.0
+
+# Use psycopg2 instead of psycopg2-binary for better compatibility
+psycopg2==2.9.9

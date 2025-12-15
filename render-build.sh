@@ -3,10 +3,17 @@
 set -o errexit
 
 # Upgrade pip
-pip install --upgrade pip
+python -m pip install --upgrade pip
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies one by one to handle potential issues
+pip install Django==4.2.16
+pip install python-decouple==3.8
+pip install whitenoise==6.6.0
+pip install gunicorn==21.2.0
+pip install dj-database-url==2.1.0
+
+# Try to install psycopg2-binary, fallback to psycopg2 if it fails
+pip install psycopg2-binary==2.9.9 || pip install psycopg2==2.9.9
 
 # Collect static files
 python manage.py collectstatic --no-input
