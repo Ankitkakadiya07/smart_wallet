@@ -1,0 +1,513 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Smart Wallet{% endblock %}
+
+{% block extra_css %}
+<!-- Chart.js CSS -->
+<style>
+  .chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+    margin: 20px 0;
+  }
+
+  #financialChart {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .financial-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .financial-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    opacity: 0.8;
+  }
+
+  .pulse-animation {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.05);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.8s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row fade-in">
+  <div class="col-12">
+    <h1 class="mb-4 text-center">
+      <i class="fas fa-chart-line me-2"></i>Financial Dashboard
+    </h1>
+  </div>
+</div>
+
+<!-- Financial Summary Cards -->
+<div class="row mb-4">
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card dashboard-card income-card financial-card" data-bs-toggle="tooltip" title="Total money received">
+      <div class="card-body text-center">
+        <div class="card-icon">
+          <i class="fas fa-arrow-up"></i>
+        </div>
+        <h5 class="card-title">Total Income</h5>
+        <h2 class="card-text pulse-animation" id="total-income">${{ total_income|floatformat:2 }}</h2>
+        <small class="text-light opacity-75">All time earnings</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card dashboard-card expense-card financial-card" data-bs-toggle="tooltip" title="Total money spent">
+      <div class="card-body text-center">
+        <div class="card-icon">
+          <i class="fas fa-arrow-down"></i>
+        </div>
+        <h5 class="card-title">Total Expenses</h5>
+        <h2 class="card-text pulse-animation" id="total-expenses">${{ total_expenses|floatformat:2 }}</h2>
+        <small class="text-light opacity-75">All time spending</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card dashboard-card balance-card financial-card" data-bs-toggle="tooltip"
+      title="Current financial balance">
+      <div class="card-body text-center">
+        <div class="card-icon">
+          <i class="fas fa-balance-scale"></i>
+        </div>
+        <h5 class="card-title">Balance</h5>
+        <h2
+          class="card-text pulse-animation {% if current_balance < 0 %}text-danger{% elif current_balance > 0 %}text-success{% else %}text-warning{% endif %}"
+          id="current-balance">${{ current_balance|floatformat:2 }}</h2>
+        <small class="text-light opacity-75">Income - Expenses</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card dashboard-card transactions-card financial-card" data-bs-toggle="tooltip"
+      title="Total number of transactions">
+      <div class="card-body text-center">
+        <div class="card-icon">
+          <i class="fas fa-list"></i>
+        </div>
+        <h5 class="card-title">Transactions</h5>
+        <h2 class="card-text pulse-animation" id="total-transactions">{{ recent_income|length|add:recent_expenses|length
+          }}</h2>
+        <small class="text-light opacity-75">Recent entries</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Visualization -->
+<div class="row mb-4">
+  <div class="col-lg-8 mb-3">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-chart-pie me-2"></i>Income vs Expenses
+        </h5>
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="btn btn-outline-primary active" id="chart-pie">Pie</button>
+          <button type="button" class="btn btn-outline-primary" id="chart-bar">Bar</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="financialChart"></canvas>
+          <div id="chart-fallback" style="display: none; text-align: center; padding: 50px;">
+            <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Chart Loading...</h5>
+            <p class="text-muted">If the chart doesn't appear, please refresh the page.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4 mb-3">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-plus-circle me-2"></i>Quick Actions
+        </h5>
+      </div>
+      <div class="card-body d-flex flex-column justify-content-center">
+        <a href="{% url 'wallet:income_create' %}" class="btn btn-success btn-custom mb-3">
+          <i class="fas fa-plus me-2"></i>Add Income
+        </a>
+        <a href="{% url 'wallet:expense_create' %}" class="btn btn-danger btn-custom mb-3">
+          <i class="fas fa-minus me-2"></i>Add Expense
+        </a>
+        <div class="text-center mt-3">
+          <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Track your finances easily
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-history me-2"></i>Recent Transactions
+        </h5>
+        <button class="btn btn-sm btn-outline-primary" id="refresh-transactions">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped" id="transactions-table">
+            <thead class="table-dark">
+              <tr>
+                <th><i class="fas fa-calendar me-1"></i>Date</th>
+                <th><i class="fas fa-tag me-1"></i>Type</th>
+                <th><i class="fas fa-file-alt me-1"></i>Description</th>
+                <th><i class="fas fa-dollar-sign me-1"></i>Amount</th>
+                <th><i class="fas fa-cogs me-1"></i>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transactions-tbody">
+              {% if recent_income or recent_expenses %}
+              <!-- Recent Income Transactions -->
+              {% for income in recent_income %}
+              <tr class="transaction-row fade-in" data-type="income" data-id="{{ income.id }}">
+                <td>
+                  <span class="fw-bold">{{ income.date|date:"M d, Y" }}</span>
+                  <br><small class="text-muted">{{ income.date|date:"l" }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-success rounded-pill">
+                    <i class="fas fa-arrow-up me-1"></i>Income
+                  </span>
+                </td>
+                <td>
+                  <div class="fw-bold">{{ income.source }}</div>
+                  <small class="text-muted">{{ income.category.name }}</small>
+                  {% if income.note %}
+                  <br><small class="text-info">{{ income.note|truncatechars:30 }}</small>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="text-success fw-bold">+${{ income.amount|floatformat:2 }}</span>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <a href="{% url 'wallet:income_update' income.pk %}" class="btn btn-outline-primary btn-sm"
+                      title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'wallet:income_delete' income.pk %}" class="btn btn-outline-danger btn-sm"
+                      title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+
+              <!-- Recent Expense Transactions -->
+              {% for expense in recent_expenses %}
+              <tr class="transaction-row fade-in" data-type="expense" data-id="{{ expense.id }}">
+                <td>
+                  <span class="fw-bold">{{ expense.date|date:"M d, Y" }}</span>
+                  <br><small class="text-muted">{{ expense.date|date:"l" }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-danger rounded-pill">
+                    <i class="fas fa-arrow-down me-1"></i>Expense
+                  </span>
+                </td>
+                <td>
+                  <div class="fw-bold">{{ expense.title }}</div>
+                  <small class="text-muted">Expense Transaction</small>
+                </td>
+                <td>
+                  <span class="text-danger fw-bold">-${{ expense.amount|floatformat:2 }}</span>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <a href="{% url 'wallet:expense_update' expense.pk %}" class="btn btn-outline-primary btn-sm"
+                      title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'wallet:expense_delete' expense.pk %}" class="btn btn-outline-danger btn-sm"
+                      title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+              {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                  <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                  <h5>No transactions yet</h5>
+                  <p>Start by adding your first income or expense transaction!</p>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+        <div class="text-center mt-4">
+          <a href="{% url 'wallet:income_list' %}" class="btn btn-outline-success me-2">
+            <i class="fas fa-list me-1"></i>View All Income
+          </a>
+          <a href="{% url 'wallet:expense_list' %}" class="btn btn-outline-danger">
+            <i class="fas fa-list me-1"></i>View All Expenses
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+  // Pass Django context data to JavaScript
+  const dashboardData = {
+    totalIncome: {% if total_income %}{{ total_income }}{% else %} 0{% endif %},
+  totalExpenses: {% if total_expenses %} { { total_expenses } } {% else %} 0{% endif %},
+  currentBalance: {% if current_balance %} { { current_balance } } {% else %} 0{% endif %},
+  recentIncomeCount: { { recent_income | length } },
+  recentExpensesCount: { { recent_expenses | length } }
+  };
+
+  // Initialize dashboard when DOM is loaded
+  document.addEventListener('DOMContentLoaded', function () {
+    initializeDashboard();
+    initializeTooltips();
+    initializeAnimations();
+  });
+
+  function initializeDashboard() {
+    // Initialize Chart.js visualization
+    initializeFinancialChart();
+
+    // Set up event listeners
+    setupEventListeners();
+
+    console.log('Dashboard initialized with data:', dashboardData);
+  }
+
+  function initializeTooltips() {
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
+
+  function initializeAnimations() {
+    // Add staggered animation to cards
+    const cards = document.querySelectorAll('.financial-card');
+    cards.forEach((card, index) => {
+      card.style.animationDelay = `${index * 0.1}s`;
+    });
+  }
+
+  function setupEventListeners() {
+    // Chart type toggle buttons
+    document.getElementById('chart-pie')?.addEventListener('click', () => switchChartType('pie'));
+    document.getElementById('chart-bar')?.addEventListener('click', () => switchChartType('bar'));
+
+    // Refresh transactions button
+    document.getElementById('refresh-transactions')?.addEventListener('click', refreshTransactions);
+  }
+
+  let financialChart = null;
+
+  function initializeFinancialChart() {
+    console.log('Initializing financial chart...');
+    console.log('Dashboard data:', dashboardData);
+
+    const canvas = document.getElementById('financialChart');
+    if (!canvas) {
+      console.error('Canvas element not found!');
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+
+    // Ensure we have valid numbers
+    const totalIncome = parseFloat(dashboardData.totalIncome) || 0;
+    const totalExpenses = parseFloat(dashboardData.totalExpenses) || 0;
+
+    console.log('Chart values - Income:', totalIncome, 'Expenses:', totalExpenses);
+
+    const data = {
+      labels: ['Income', 'Expenses'],
+      datasets: [{
+        data: [totalIncome, totalExpenses],
+        backgroundColor: [
+          'rgba(40, 167, 69, 0.8)',
+          'rgba(220, 53, 69, 0.8)'
+        ],
+        borderColor: [
+          'rgba(40, 167, 69, 1)',
+          'rgba(220, 53, 69, 1)'
+        ],
+        borderWidth: 2
+      }]
+    };
+
+    const config = {
+      type: 'pie',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    try {
+      financialChart = new Chart(ctx, config);
+      console.log('Chart created successfully!');
+
+      // Hide fallback message if chart loads successfully
+      const fallback = document.getElementById('chart-fallback');
+      if (fallback) {
+        fallback.style.display = 'none';
+      }
+    } catch (error) {
+      console.error('Error creating chart:', error);
+
+      // Show fallback message
+      const fallback = document.getElementById('chart-fallback');
+      if (fallback) {
+        fallback.style.display = 'block';
+        fallback.innerHTML = `
+          <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+          <h5 class="text-warning">Chart Error</h5>
+          <p class="text-muted">Unable to load chart. Error: ${error.message}</p>
+        `;
+      }
+    }
+  }
+
+  function switchChartType(type) {
+    if (!financialChart) return;
+
+    // Update button states
+    document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`chart-${type}`).classList.add('active');
+
+    // Update chart type
+    financialChart.config.type = type;
+
+    if (type === 'bar') {
+      financialChart.config.options.scales = {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function (value) {
+              return '$' + value.toFixed(2);
+            }
+          }
+        }
+      };
+    } else {
+      delete financialChart.config.options.scales;
+    }
+
+    financialChart.update();
+  }
+
+  function refreshTransactions() {
+    // Add loading state
+    const refreshBtn = document.getElementById('refresh-transactions');
+    const originalContent = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    refreshBtn.disabled = true;
+
+    // Simulate refresh (in real implementation, this would be an AJAX call)
+    setTimeout(() => {
+      refreshBtn.innerHTML = originalContent;
+      refreshBtn.disabled = false;
+
+      // Add success feedback
+      const alert = document.createElement('div');
+      alert.className = 'alert alert-success alert-dismissible fade show mt-2';
+      alert.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>Transactions refreshed successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      document.querySelector('.card-body').prepend(alert);
+
+      // Auto-dismiss after 3 seconds
+      setTimeout(() => {
+        alert.remove();
+      }, 3000);
+    }, 1000);
+  }
+</script>
+{% endblock %}

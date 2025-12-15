@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Income - Smart Wallet{% endblock %}
+
+{% block extra_css %}
+<style>
+  .delete-header {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+  }
+
+  .delete-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+
+  .delete-card .card-header {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    border-bottom: 2px solid #dc3545;
+    padding: 1.5rem;
+  }
+
+  .transaction-details {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    border: 2px solid #ffc107;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .detail-item:last-child {
+    border-bottom: none;
+  }
+
+  .detail-label {
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+  }
+
+  .detail-label i {
+    margin-right: 0.5rem;
+    color: #ffc107;
+  }
+
+  .detail-value {
+    font-weight: 500;
+    color: #212529;
+  }
+
+  .amount-highlight {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #28a745;
+  }
+
+  .warning-box {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    border: 2px solid #dc3545;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+
+  .warning-icon {
+    font-size: 3rem;
+    color: #dc3545;
+    margin-bottom: 1rem;
+  }
+
+  .btn-delete {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    border: none;
+    border-radius: 25px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    min-width: 150px;
+  }
+
+  .btn-delete:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+  }
+
+  .btn-cancel {
+    border: 2px solid #6c757d;
+    border-radius: 25px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    min-width: 150px;
+  }
+
+  .btn-cancel:hover {
+    background-color: #6c757d;
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  .fade-in {
+    animation: fadeIn 0.8s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .pulse-warning {
+    animation: pulseWarning 2s infinite;
+  }
+
+  @keyframes pulseWarning {
+    0% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.05);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* Mobile responsive adjustments */
+  @media (max-width: 768px) {
+    .delete-header {
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .delete-card .card-header {
+      padding: 1rem;
+    }
+
+    .detail-item {
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .detail-value {
+      margin-top: 0.25rem;
+    }
+
+    .btn-delete,
+    .btn-cancel {
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .transaction-details {
+      padding: 1rem;
+    }
+
+    .warning-box {
+      padding: 1rem;
+    }
+
+    .warning-icon {
+      font-size: 2rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <!-- Header Section -->
+  <div class="delete-header">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-2">
+          <i class="fas fa-trash-alt me-3"></i>Delete Income Transaction
+        </h1>
+        <p class="mb-0 opacity-90">
+          Permanently remove this income record from your wallet
+        </p>
+      </div>
+      <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="{{ cancel_url }}" class="btn btn-light">
+          <i class="fas fa-arrow-left me-2"></i>Back to List
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Delete Confirmation Card -->
+      <div class="card delete-card">
+        <div class="card-header">
+          <h5 class="mb-0 text-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+          </h5>
+        </div>
+        <div class="card-body p-4">
+
+          <!-- Warning Box -->
+          <div class="warning-box pulse-warning">
+            <div class="warning-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h4 class="text-danger mb-3">Are you sure?</h4>
+            <p class="mb-0">
+              This action cannot be undone. The income transaction will be permanently deleted
+              and your financial totals will be recalculated.
+            </p>
+          </div>
+
+          <!-- Transaction Details -->
+          <div class="transaction-details">
+            <h6 class="text-warning mb-3">
+              <i class="fas fa-info-circle me-2"></i>Transaction Details
+            </h6>
+
+            <div class="detail-item">
+              <span class="detail-label">
+                <i class="fas fa-tag"></i>Category
+              </span>
+              <span class="detail-value">{{ income.category.name }}</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">
+                <i class="fas fa-building"></i>Source
+              </span>
+              <span class="detail-value">{{ income.source }}</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">
+                <i class="fas fa-dollar-sign"></i>Amount
+              </span>
+              <span class="detail-value amount-highlight">+${{ income.amount|floatformat:2 }}</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">
+                <i class="fas fa-calendar"></i>Date
+              </span>
+              <span class="detail-value">{{ income.date|date:"F d, Y" }}</span>
+            </div>
+
+            {% if income.note %}
+            <div class="detail-item">
+              <span class="detail-label">
+                <i class="fas fa-sticky-note"></i>Note
+              </span>
+              <span class="detail-value">{{ income.note }}</span>
+            </div>
+            {% endif %}
+
+            <div class="detail-item">
+              <span class="detail-label">
+                <i class="fas fa-clock"></i>Created
+              </span>
+              <span class="detail-value">{{ income.created_at|date:"F d, Y g:i A" }}</span>
+            </div>
+          </div>
+
+          <!-- Impact Information -->
+          <div class="alert alert-info" role="alert">
+            <h6 class="alert-heading">
+              <i class="fas fa-calculator me-2"></i>Financial Impact
+            </h6>
+            <p class="mb-0">
+              Deleting this transaction will reduce your total income by
+              <strong class="text-success">${{ income.amount|floatformat:2 }}</strong>
+              and update your current balance accordingly.
+            </p>
+          </div>
+
+          <!-- Confirmation Form -->
+          <form method="post" id="delete-form">
+            {% csrf_token %}
+
+            <div class="row mt-4">
+              <div class="col-md-6 mb-2">
+                <button type="submit" class="btn btn-danger btn-delete w-100" id="delete-btn">
+                  <i class="fas fa-trash-alt me-2"></i>Yes, Delete Transaction
+                </button>
+              </div>
+              <div class="col-md-6 mb-2">
+                <a href="{{ cancel_url }}" class="btn btn-secondary btn-cancel w-100">
+                  <i class="fas fa-times me-2"></i>Cancel
+                </a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Additional Information -->
+      <div class="card delete-card mt-3">
+        <div class="card-body">
+          <h6 class="text-muted mb-3">
+            <i class="fas fa-lightbulb me-2"></i>Alternative Actions
+          </h6>
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <a href="{% url 'wallet:income_update' income.pk %}" class="btn btn-outline-primary w-100">
+                <i class="fas fa-edit me-2"></i>Edit Instead
+              </a>
+            </div>
+            <div class="col-md-6 mb-2">
+              <a href="{% url 'wallet:dashboard' %}" class="btn btn-outline-info w-100">
+                <i class="fas fa-chart-line me-2"></i>View Dashboard
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('delete-form');
+    const deleteBtn = document.getElementById('delete-btn');
+
+    // Add simple confirmation dialog
+    form.addEventListener('submit', function (e) {
+      const confirmed = confirm('Are you sure you want to delete this income transaction? This action cannot be undone.');
+
+      if (!confirmed) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Show loading state
+      deleteBtn.disabled = true;
+      const originalContent = deleteBtn.innerHTML;
+      deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+    });
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function (e) {
+      // Escape key to cancel
+      if (e.key === 'Escape') {
+        window.location.href = '{{ cancel_url }}';
+      }
+    });
+
+    // Add hover effects to action buttons
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('mouseenter', function () {
+        this.style.transform = 'translateY(-2px)';
+      });
+
+      btn.addEventListener('mouseleave', function () {
+        this.style.transform = 'translateY(0)';
+      });
+    });
+
+    // Auto-focus on cancel button for safety
+    document.querySelector('.btn-cancel').focus();
+  });
+</script>
+{% endblock %}
